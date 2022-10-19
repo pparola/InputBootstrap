@@ -1,0 +1,56 @@
+﻿@page "/InputNumberBootstrap"
+
+<h3>Input Number Bootstrap</h3>
+
+<br />
+<div class="form-group">
+    <label class="form-label">Ingreso 2-way</label>
+    <input type="number"
+           class="form-control"
+           @bind-value="@ingresoDatos.IngresoNumber1" />
+</div>
+
+<br />
+<div class="form-group">
+    <label class="form-label">Ingreso por onChanged</label>
+    <input type="number"
+           class="form-control"
+           value="@ingresoDatos.IngresoNumber2"
+           @onchange="ingresoDatos_IngresoTexto2_onInput" />
+</div>
+
+<br />
+<p>@ingresoDatos.IngresoNumber1</p>
+<p>@ingresoDatos.IngresoNumber2</p>
+
+
+
+@code {
+
+    public IngresoDatos ingresoDatos { get; set; } = new IngresoDatos();
+
+    public void ingresoDatos_IngresoTexto2_onInput(ChangeEventArgs args)
+    {
+        if (args.Value.ToString() == "")
+        {
+            ingresoDatos.IngresoNumber2 = 0;
+        }
+        else
+        {
+            ingresoDatos.IngresoNumber2 = double.Parse( args.Value.ToString());
+        }
+    }
+
+
+    public class IngresoDatos
+    {
+        public double IngresoNumber1 { get; set; }
+        public double IngresoNumber2 { get; set; }
+
+        public IngresoDatos()
+        {
+            IngresoNumber1 = 1;
+            IngresoNumber2 = 22.22;
+        }
+    }
+}

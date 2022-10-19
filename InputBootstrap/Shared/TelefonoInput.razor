@@ -1,0 +1,583 @@
+﻿@inject ISmsServicio _smsServicio
+@inject IVeriteleServicio _veriteleServicio
+@inject IParametrosServicio2 _parametrosServicio
+
+<div class="form-group">
+
+    <label class="form-label">@Label</label>
+
+    <div class="row">
+
+        <div class="col-sm-1">
+
+            <select class="form-select" @onchange="Tipo_OnChange">
+                @foreach (string opcion in TiposTelefono)
+                {
+                    @if (opcion == Tipo)
+                    {
+                        <option selected value="@opcion">@opcion</option>
+                    }
+                    else
+                    {
+                        <option value="@opcion">@opcion</option>
+                    }
+                }
+            </select>
+
+
+        </div>
+
+        <div class="col-sm-2">
+
+            <input type="number"
+                   class="form-control"
+                   value="@Telediscado" 
+                   @onchange="Telediscado_onInput" />
+
+            @if (Telediscado_Error != "")
+            {
+                <div class="alert alert-danger" role="alert"> @Telediscado_Error </div>
+            }
+
+        </div>
+
+        <div class="col-sm-2">
+
+            <input type="number"
+                   class="form-control"
+                   value="@Numero" 
+                   @onchange="Numero_onInput" />
+
+            @if (Numero_Error != "")
+            {
+                <div class="alert alert-danger" role="alert"> @Numero_Error </div>
+            }
+            @if (Telefono10Digitos_Error != "")
+            {
+                <div class="alert alert-danger" role="alert"> @Telefono10Digitos_Error </div>
+            }
+
+
+        </div>
+
+        <div class="col-sm-2">
+            <select class="form-select" @onchange="Titular_OnChange">
+                @foreach (string opcion in TiposTitular)
+                {
+                    @if (opcion == Tipo)
+                    {
+                        <option selected value="@opcion">@opcion</option>
+                    }
+                    else
+                    {
+                        <option value="@opcion">@opcion</option>
+                    }
+                }
+            </select>
+
+        </div>
+
+        <div class="@class_observac">
+            
+            <input type="text"
+                   class="form-control"
+                   value="@Observacion" 
+                   @onchange="Observacion_onInput" />
+
+        </div>
+
+        @if(Tipo == "Cel" && VerSmsActivada)
+        {
+            <div class="col-sm-2">
+                <button class="btn btn-outline-success w-100" @onclick="Verificar">Ver.Sms<div style="font-size: 7px;">@VerFechaVerificacion()</div></button>
+            </div>
+        }
+    </div>
+
+    @if (VerValidar && Tipo == "Cel"  && VerSmsActivada)
+    {
+        <br />
+        
+        <div class="container-sm">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Verificacion Telefonica por Sms</h6>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="form-group">
+                            <label class="form-label">Ultima Verificacion</label>
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <div class="form-control alert-info">
+                                        @if(envioSms==null)
+                                        {
+                                            @if(VerFechaVerificacion()=="")
+                                            {
+                                                <div>Todavia no Se verifico el telefono!</div>
+                                            }
+                                            else
+                                            {
+                                                @VerFechaVerificacion()
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if (@envioSms.errorDescripcion.ToUpper() == "OK")
+                                            {
+                                                <div>Mensaje Enviado Correctamente!</div>
+                                            }
+                                            else
+                                            {
+                                                @envioSms.errorDescripcion 
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-outline-success w-100" @onclick="EnviarSms">Enviar Sms</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <br/>
+                        <div class="form-group">
+
+                            <label class="form-label">Codigo Enviado al Sms</label>
+                            <div class="row">
+                                <div class="col-sm-10">
+                                    <input class="form-control" 
+                                            type="number"
+                                            max="9999"
+                                            min="1000"
+                                            @bind-value="@Codigo" />
+                                </div>
+                                <div class="col-sm-2">
+                                    <button class="btn btn-outline-primary w-100" @onclick="VerificarSms">Verificar</button>
+                                </div>
+                            </div>
+                        </div>
+                        @if (VerificacionSms_Error!="")
+                        {
+                            <div class="col-sm-12">
+                                <div class="form-control alert-danger">@VerificacionSms_Error</div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="card-footer">
+                        <button class="btn btn-secondary" @onclick="Verificar" >Cerrar</button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+        <br />
+    }
+
+</div>
+
+
+
+
+@code {
+    [Parameter]
+    public string Empresa { get; set; } = "";
+
+    [Parameter]
+    public string Cliente { get; set; } = "";
+
+    [Parameter]
+    public string Comercio { get; set; } = "";
+
+    [Parameter]
+    public string Label { get; set; } = "Telefono";
+
+    [Parameter]
+    public string Telefo { get; set; } = "";
+
+    [Parameter]
+    public EventCallback<string> OnTelefoChanged { get; set; }
+
+    // 
+    private string Tipo { get; set; } = "";
+    private int Telediscado { get; set; } = 0;
+    private int Numero { get; set; } = 0;
+    private string Titular { get; set; } = "";
+    private string Observacion { get; set; } = "";
+    private DateTime FechaVerificacion { get; set; } = SigecreNegocio.Helpers.General.FECHANULA();
+    //
+
+    public List<VeriteleNegocio> Verificaciones { get; set; } = new List<VeriteleNegocio>();
+
+    public string TelefoChanged { get; set; } = "";
+    private string Codigo { get; set; } = "";
+
+    private string Telediscado_Error { get; set; } = "";
+    private string Numero_Error { get; set; } = "";
+    private string Telefono10Digitos_Error { get; set; } = "";
+    private string VerificacionSms_Error { get; set; } = "";
+
+    private string class_observac { get; set; } = "col-sm-5";
+
+    private List<string> TiposTelefono = new List<string>();
+    private List<string> TiposTitular = new List<string>();
+    private bool VerValidar { get; set; } = false;
+
+    private bool VerSmsActivada { get; set; } = false;
+
+    private SmsNegocio envioSms = null;
+
+    private void VerificarSms()
+    {
+        VerificacionSms_Error = "";
+        var Telefono = Telediscado.ToString() + Numero.ToString();
+        var codigo = SigecreNegocio.Helpers.General.CalcularCodigo(Telefono);
+        if (Codigo != codigo)
+        {
+            VerificacionSms_Error = "No Coincide la Clave de Verificacion Telefonica!";
+        }
+        if (VerificacionSms_Error == "")
+        {
+            try{
+                VeriteleNegocio verifica = new VeriteleNegocio();
+                verifica.id = 0;
+                verifica.codigo = "";
+                verifica.comercio = Comercio.ToUpper();
+                verifica.cliente = Cliente;
+                verifica.fecha = DateTime.Now.Date;
+                verifica.tipo = "T1";
+                verifica.verifica = codigo;
+                verifica.respuesta = Codigo;
+                verifica.telefono = Telefono;
+                verifica = _veriteleServicio.Grabar(Empresa, verifica);
+                if (verifica.id == 0)
+                {
+                    VerificacionSms_Error = "No Se pudo Registrar la verificacion!";
+                }
+            }
+            catch
+            {
+                VerificacionSms_Error = "No Se pudo Registrar la verificacion!";
+            }
+        }
+        if (VerificacionSms_Error == "")
+        {
+            FechaVerificacion = SigecreNegocio.Helpers.General.FECHANULA();
+            VerFechaVerificacion();
+            VerValidar = false;
+        }
+    }
+
+
+    private void EnviarSms()
+    {
+        if(Telefono10Digitos_Error == "")
+        {
+            var Telefono = Telediscado.ToString() + Numero.ToString();
+            try
+            {
+                envioSms = _smsServicio.EnvioSms(Empresa, Comercio, Cliente, Telefono, string.Empty);
+            }
+            catch(Exception e)
+            {
+                VerificacionSms_Error = e.Message;
+            }
+            
+        }
+    }
+
+
+    private string VerFechaVerificacion()
+    {
+        VerificacionSms_Error = "";
+        var Telefono = Telediscado.ToString() + Numero.ToString();
+
+        if(FechaVerificacion == SigecreNegocio.Helpers.General.FECHANULA())
+        {
+
+            try
+            {
+                FechaVerificacion = _veriteleServicio.FecUltVeriTele(Empresa, Cliente, Telefono);
+                if (FechaVerificacion == SigecreNegocio.Helpers.General.FECHANULA())
+                {
+                    VerificacionSms_Error = "No Hay Verificacion para el Cliente!";
+                }
+
+            }
+            catch
+            {
+                FechaVerificacion = SigecreNegocio.Helpers.General.FECHANULA();
+                VerificacionSms_Error = "No se pudo leer La Verificacion Telefonica!";
+            }
+
+        }
+        string respuesta = "";
+        if(FechaVerificacion != SigecreNegocio.Helpers.General.FECHANULA())
+        {
+            respuesta += "(";
+            respuesta += FechaVerificacion.ToString("dd/MM/yyyy");
+            respuesta += ")";
+        }
+        return respuesta;
+    }
+
+
+    protected override void OnInitialized()
+    {
+        TiposTelefono.Add("Ant");
+        TiposTelefono.Add("Fijo");
+        TiposTelefono.Add("Cel");
+        TiposTelefono.Add("");
+        // -
+        TiposTitular.Add("Titular");
+        TiposTitular.Add("Otro");
+        TiposTitular.Add("");
+
+        base.OnInitialized();
+    }
+
+
+    protected override void OnParametersSet()
+    {
+
+        TelefoChanged = Telefo;
+
+        AbrirTelefono(Telefo);
+
+        string SMSUSUARIO = _parametrosServicio.Leer(Empresa, "SMSUSUARIO", Comercio);
+        if(SMSUSUARIO.Trim() == "")
+            VerSmsActivada = false;
+        else
+            VerSmsActivada = true;
+
+        if(Tipo == "Cel" && VerSmsActivada )
+            class_observac = "col-sm-3";
+        else
+            class_observac = "col-sm-5";
+
+
+    }
+
+    private async Task CerrarTelefono()
+    {
+
+        Telefono10Digitos_Error = "";
+
+        if (Telediscado.ToString() == "0") return;
+        if (Numero.ToString() == "0") return;
+
+        var Telefono10Digitos = Telediscado.ToString() + Numero.ToString();
+
+        if(Telefono10Digitos.Count() != 10) 
+            Telefono10Digitos_Error += "Se requiere que entre el Telediscado y el Numero tenga 10 digitos! \n";
+
+        if(!(Tipo == "Cel" || Tipo == "Fijo"))
+            Telefono10Digitos_Error += "El Telefono debe ser Celular o Fijo! \n";
+
+        if(!(Titular == "Titular" || Titular == "Otro"))
+            Telefono10Digitos_Error += "Indique si el Telefono es del Titular o de Otro! \n";
+
+
+        var stelefo = string.Empty;
+        if (Tipo == "" || Tipo == "Ant")
+        {
+            stelefo = Observacion;
+        }
+        else
+        {
+            stelefo += Tipo.Substring(0, 1);
+            stelefo += Telediscado.ToString() ?? "" ;
+            stelefo += "-";
+            stelefo += Tipo.Substring(0, 1) == "C" ? "15" : "" ;
+            stelefo += "-";
+            stelefo += Numero.ToString() ?? "";
+            stelefo += "-";
+            if (Titular.Length > 0)
+                stelefo += Titular.Substring(0, 1);
+            else
+                stelefo += "";
+            stelefo += "-";
+            stelefo += Observacion.ToUpper() ?? "";
+
+            if(stelefo.Length>32)
+            {
+                Telefono10Digitos_Error += "Al parecer la Observacion es muy Larga, reduzca el tamaño por favor! \n";
+            }
+
+
+
+        }
+        if(Telefono10Digitos_Error.Length == 0) 
+        {
+            TelefoChanged = stelefo;
+            await OnTelefoChanged.InvokeAsync( stelefo );
+        }
+    }
+
+    private void AbrirTelefono(string telefono)
+    {
+        if (telefono.Length == 0)
+        {
+            this.Tipo = "";
+            this.Telediscado = 0;
+            this.Numero = 0;
+            this.Titular = "";
+            this.Observacion = "";
+            return;
+        }
+
+        var sTipo = telefono.Substring(0, 1);
+        if(sTipo!="C" && sTipo != "F")
+        {
+            this.Tipo = "Ant";
+            this.Telediscado = 0;
+            this.Numero = 0;
+            this.Titular = "";
+            this.Observacion = telefono.Trim();
+            return;
+        }
+
+        var sTelefo = telefono.Trim().Substring(1);
+        string[] aTelefo = sTelefo.Split("-");
+        if (aTelefo.Count() == 5)
+        {
+            if (sTipo == "C")
+                this.Tipo = "Cel";
+            else
+                this.Tipo = "Fijo";
+            this.Telediscado = int.Parse(aTelefo[0]);
+            this.Numero = int.Parse( aTelefo[2]);
+            if (aTelefo[3] == "T")
+                this.Titular = "Titular";
+            else if (aTelefo[3] == "O")
+                this.Titular = "Otro";
+            else
+                this.Titular = "";
+            this.Observacion = aTelefo[4];
+        }
+        else
+        {
+            this.Tipo = "Ant";
+            this.Telediscado = 0;
+            this.Numero = 0;
+            this.Titular = "";
+            this.Observacion = telefono.Trim();
+        }
+    }
+
+    private async Task Verificar()
+    {
+        VerValidar = !VerValidar;
+        await CerrarTelefono();
+    }
+
+    private async Task Tipo_OnChange(ChangeEventArgs args)
+    {
+        try
+        {
+            Tipo = args.Value.ToString();
+        }
+        catch
+        {
+            Tipo = "";
+        }
+        if(Tipo == "Cel")
+            class_observac = "col-sm-3";
+        else
+            class_observac = "col-sm-5";
+        await CerrarTelefono();
+
+    }
+
+    private async Task Titular_OnChange(ChangeEventArgs args)
+    {
+        try
+        {
+            Titular = args.Value.ToString();
+        }
+        catch
+        {
+            Titular = "";
+        }
+        await CerrarTelefono();
+    }
+
+    private async Task Telediscado_onInput(ChangeEventArgs args)
+    {
+        Telediscado_Error = "";
+        string valor = "";
+        try
+        {
+            valor = args.Value.ToString();
+        }
+        catch
+        {
+            valor = "0";
+        }
+
+        if(valor != "0")
+        {
+            if(valor.StartsWith("0"))
+            {
+                Telediscado_Error = "El Telediscado no puede comenzar con 0";
+            }
+            else
+            {
+                Telediscado = int.Parse(valor);
+                FechaVerificacion = SigecreNegocio.Helpers.General.FECHANULA();
+            }
+        }
+        await CerrarTelefono();
+    }
+
+    private async Task Numero_onInput(ChangeEventArgs args)
+    {
+        Numero_Error = "";
+        string valor = "";
+        try
+        {
+            valor = args.Value.ToString();
+        }
+        catch
+        {
+            valor = "0";
+        }
+
+        if(valor != "0")
+        {
+            if (valor.StartsWith("0"))
+            {
+                Numero_Error = "El Numero no puede comenzar con 0";
+            }
+            else
+            {
+                FechaVerificacion = SigecreNegocio.Helpers.General.FECHANULA();
+                Numero = int.Parse( valor);
+            }
+        }
+        await CerrarTelefono();
+
+    }
+
+    private async Task Observacion_onInput(ChangeEventArgs args)
+    {
+        string valor = "";
+        try
+        {
+            valor = args.Value.ToString();
+        }
+        catch
+        {
+            valor = "";
+        }
+        Observacion = valor ?? "";
+        await CerrarTelefono();
+
+    }
+
+}

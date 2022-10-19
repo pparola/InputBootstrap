@@ -1,0 +1,49 @@
+﻿@page "/InputCombo"
+@using System.Collections.Generic
+
+<h3>Input Combo</h3>
+
+<select class="form-select" @onchange="OnChange" >
+    @foreach(var Op in Opciones)
+    {
+        @if (selectedString == Op.Codigo)
+        {
+            <option selected value="@Op.Codigo" >@Op.Nombre</option>
+        }
+        else
+        {
+            <option value="@Op.Codigo">@Op.Nombre</option>
+        }
+    }            
+</select>
+
+<p>@selectedString</p>
+
+@code{
+    private string selectedString { get; set; } = "";
+
+    private void OnChange(ChangeEventArgs e)
+    {
+        selectedString = e.Value.ToString();
+    }
+
+
+    public List<Opcion> Opciones = new List<Opcion>();
+
+    protected override void OnInitialized()
+    {
+        Opciones.Add(new Opcion() { Codigo = "D ", Nombre = "Solo Dni" });
+        Opciones.Add(new Opcion() { Codigo = "R ", Nombre = "Recibo de Sueldo" });
+        Opciones.Add(new Opcion() { Codigo = "DS", Nombre = "Dni y Servicio" });
+        Opciones.Add(new Opcion() { Codigo = "E ", Nombre = "Cliente Especial" });
+
+        selectedString = "R ";
+    }
+
+
+    public class Opcion
+    {
+        public string Codigo{ get; set; }
+        public string Nombre{ get; set; }
+    }
+}

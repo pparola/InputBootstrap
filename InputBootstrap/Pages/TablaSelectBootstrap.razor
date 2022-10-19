@@ -1,0 +1,61 @@
+﻿@page "/TableSelectBootstrap"
+
+<h3>Tabla Select Bootstrap</h3>
+
+<SfGrid DataSource="@Lista" SelectedRowIndex="nCodigo" >
+    <GridEvents RowSelected="RowSelecthandler" TValue="Prueba"></GridEvents>
+    <GridColumns>
+        <GridColumn Field=@nameof(Prueba.Codigo) HeaderText="Codigo" TextAlign="TextAlign.Left" Width="20"></GridColumn>
+        <GridColumn Field=@nameof(Prueba.Nombre) HeaderText="Nombre" TextAlign="TextAlign.Left" Width="200"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+
+<p>@sCodigo</p>
+
+
+
+@code {
+    private string sCodigo { get; set; } = "";
+    private int nCodigo { get; set; } = 1;
+
+    public List<Prueba> Lista = new List<Prueba>();
+
+    public void RowSelecthandler(RowSelectEventArgs<Prueba> Args)
+    {
+        sCodigo = Args.Data.Codigo;
+        nCodigo = Args.Data.nRow;
+    }
+
+    protected override void OnInitialized()
+    {
+        Lista.Add(new Prueba() { Codigo = "01", Nombre = "Prueba 01" , nRow = 0 });
+        Lista.Add(new Prueba() { Codigo = "02", Nombre = "Prueba 02" , nRow = 1 });
+        Lista.Add(new Prueba() { Codigo = "03", Nombre = "Prueba 03" , nRow = 2 });
+        Lista.Add(new Prueba() { Codigo = "04", Nombre = "Prueba 04" , nRow = 3 });
+        Lista.Add(new Prueba() { Codigo = "05", Nombre = "Prueba 05" , nRow = 4 });
+        Lista.Add(new Prueba() { Codigo = "06", Nombre = "Prueba 06" , nRow = 5 });
+    }
+
+
+    private void SeleccionaRegistroTabla(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+
+    }
+
+
+    public class Prueba
+    {
+        public string Codigo { get; set; }
+        public string Nombre { get; set; }
+        public int nRow{ get; set; }
+        public Prueba()
+        {
+            Codigo = "";
+            Nombre = "";
+            nRow = 0;
+        }
+    }
+
+
+}

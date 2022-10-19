@@ -1,0 +1,76 @@
+﻿@page "/"
+
+
+<PageTitle>Index</PageTitle>
+
+
+<h1>Demo de Imput</h1>
+
+
+<br />
+
+@*<TelefonoInput  Empresa="@Empresa"
+                Comercio="@Comercio"
+                Telefo="@Telefo"
+                Cliente="@Cliente"
+                Label="Telefono 1"
+                OnTelefoChanged="Telefo_Changed">
+</TelefonoInput>
+
+<br />
+
+
+<LocalidadInput Empresa="@Empresa"
+                Codpos="@Codpos"
+                Localidad="@Localidad"
+                OnCodposChanged="Codipost_Changed">
+</LocalidadInput>
+<br />
+
+<div>
+    Numero: @Telefo
+</div>
+
+<div>
+    <p>
+        Codpos: @Codpos
+    </p>
+    <p>
+        Localidad: @Localidad
+    </p>
+</div>
+*@
+
+
+@code{
+
+    private string Empresa = "test";
+    private string Comercio = "C001";
+    private string Cliente = "1-22387265";
+
+    private string Telefo = "C11-15-57573741-T-PRUEBA";
+
+
+    private int IdCodpos { get; set; } = -1;
+    private string Codpos { get; set; } = "";
+    private string Localidad { get; set; } = "";
+
+    private void Codipost_Changed( Codipost codigoPostal)
+    {
+        Codpos = codigoPostal.CODIGO;
+        Localidad = codigoPostal.LOCALIDAD;
+        IdCodpos = codigoPostal.ID;
+    }
+
+
+    private void Telefo_Changed(string telefono_cambiado)
+    {
+        Telefo = telefono_cambiado;
+    }
+
+
+
+
+
+
+}

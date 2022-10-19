@@ -1,0 +1,160 @@
+﻿@inject ICodipostServicio _codipostServicio
+
+<div class="row">
+
+    <div class="form-group">
+        <label class="form-label">C.Postal</label>
+
+        <div class="row">
+
+            <div class="col-sm-3">
+                <input type="text" 
+                        class="form-control" 
+                        value="@Codpos"
+                        maxlength="4"
+                        @onchange="@Codpos_onInput" />                                        
+            </div>
+                                    
+            <div class="col-sm-8">
+                <input type="text" 
+                        class="form-control" 
+                        value="@Localidad"
+                        disabled />
+            </div>
+
+            <div class="col-sm-1">
+                <button class="btn btn-outline-success w-100" @onclick="ActivarBusqueda">...</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@if (VerBusqueda)
+{
+    <br />
+
+    <div class="card">
+
+        <div class="card-header">
+            <h6>Busqueda de Localidades</h6>
+        </div>
+
+        <div class="card-body">
+
+            <SfGrid DataSource="@codigosPostales" AllowFiltering="true" AllowPaging="true" >
+                <GridPageSettings PageCount="5" PageSizes="true"></GridPageSettings>
+                <GridEvents RowSelected="RowSelecthandler" TValue="Codipost"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(Codipost.CODIGO) HeaderText="Codigo" TextAlign="TextAlign.Left" Width="20"></GridColumn>
+                    <GridColumn Field=@nameof(Codipost.LOCALIDAD) HeaderText="Nombre" TextAlign="TextAlign.Left" Width="200"></GridColumn>
+                </GridColumns>
+            </SfGrid>
+
+
+            Aca Buscamos
+
+        </div>
+
+        <div class="card-footer">
+            <button class="btn btn-secondary" @onclick="ActivarBusqueda">Cerrar</button>
+        </div>
+
+    </div>
+
+    <br />
+}
+
+        
+
+
+@code {
+    [Parameter]
+    public string Codpos { get; set; } = "";
+    [Parameter]
+    public string Localidad { get; set; } = "";
+    [Parameter]
+    public string Empresa { get; set; } = "";
+    [Parameter]
+    public EventCallback<Codipost> OnCodposChanged { get; set; }
+
+    private int Id { get; set; } = -1;
+
+    private bool VerBusqueda = false;
+    private List<Codipost> codigosPostales = new List<Codipost>();
+    private Codipost codigoPostal = new Codipost();
+
+    private void ActivarBusqueda()
+    {
+        VerBusqueda = !VerBusqueda;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(Codpos))
+        {
+            codigosPostales = _codipostServicio.EnumerarPorLocalidad(Empresa, "");
+        }
+        if (!string.IsNullOrEmpty(Codpos) && string.IsNullOrEmpty(Localidad))
+        {
+            codigoPostal = _codipostServicio.Leer(Empresa, Codpos, Localidad);
+            if (codigoPostal != null)
+            {
+                Id = codigoPostal.ID;
+                await OnCodposChanged.InvokeAsync(codigoPostal);
+            }
+        }
+    }
+
+
+    public async Task Codpos_onInput(ChangeEventArgs args)
+    {
+        if (args.Value == null)
+        {
+            Codpos = "";
+        }
+        else
+        {
+            Codpos = args.Value.ToString();
+
+            codigosPostales = _codipostServicio.EnumerarPorCodigo(Empresa, Codpos);
+            if (codigosPostales.Count == 0)
+            {
+                codigoPostal = new Codipost();
+                Localidad = "";
+                Id = -1;
+                codigosPostales = _codipostServicio.EnumerarPorLocalidad(Empresa, "");
+
+            }
+            else
+            {
+                codigoPostal = codigosPostales[0];
+                Codpos = codigoPostal.CODIGO;
+                Localidad = codigoPostal.LOCALIDAD;
+                Id = codigoPostal.ID;
+
+                if (codigosPostales.Count > 1)
+                {
+                    VerBusqueda = true;
+                }
+                else
+                {
+                    await OnCodposChanged.InvokeAsync(codigoPostal);
+                }
+
+            }
+        }
+    }
+
+    public async Task RowSelecthandler(RowSelectEventArgs<Codipost> Args)
+    {
+        codigoPostal = Args.Data;
+        Codpos = codigoPostal.CODIGO;
+        Localidad = codigoPostal.LOCALIDAD;
+        Id = codigoPostal.ID;
+        VerBusqueda = false;
+        await OnCodposChanged.InvokeAsync(codigoPostal);
+    }
+
+
+}

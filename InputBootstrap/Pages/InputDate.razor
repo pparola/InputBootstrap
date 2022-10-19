@@ -1,0 +1,53 @@
+﻿@page "/InputDateBootstrap"
+
+<h3>Input Date Bootstrap</h3>
+
+<br />
+<div class="form-group">
+    <label class="form-label">Ingreso 2-way</label>
+    <input type="date"
+           class="form-control"
+           placeholder="dd-mm-yyyy"
+           @bind-value="@ingresoDatos.IngresoFecha1" />
+</div>
+
+<br />
+<div class="form-group">
+    <label class="form-label">Ingreso por onChanged</label>
+    <input type="date"
+           class="form-control"
+           value="@ingresoDatos.IngresoFecha2.ToString("yyyy-MM-dd")"
+           placeholder="dd-mm-yyyy"
+           @onchange="ingresoDatos_IngresoTexto2_onInput" />
+</div>
+
+
+<br />
+<p>@ingresoDatos.IngresoFecha1</p>
+<p>@ingresoDatos.IngresoFecha2</p>
+
+
+@code {
+
+    public IngresoDatos ingresoDatos { get; set; } = new IngresoDatos();
+
+    public void ingresoDatos_IngresoTexto2_onInput(ChangeEventArgs args)
+    {
+        string Fecha = args.Value.ToString();
+        if(! string.IsNullOrEmpty(Fecha)) ingresoDatos.IngresoFecha2 = DateTime.Parse(Fecha);
+    }
+
+
+
+    public class IngresoDatos
+    {
+        public DateTime IngresoFecha1 { get; set; }
+        public DateTime IngresoFecha2 { get; set; }
+
+        public IngresoDatos()
+        {
+            IngresoFecha1 = DateTime.Now.Date;
+            IngresoFecha2 = DateTime.Now.Date;
+        }
+    }
+}
